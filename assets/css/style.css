@@ -1267,6 +1267,7 @@ body {
   margin-top: 2rem;
   position: relative;
   width: 100%;
+  overflow-x: clip;
 }
 
 .rsvp-garland {
@@ -1357,7 +1358,25 @@ body {
   }
 
   .rsvp-garland {
-    display: none !important;
+    display: block !important;
+    top: 10px;
+    width: calc(50% - 72px);
+    max-width: 120px;
+    opacity: 0.85;
+  }
+
+  .rsvp-garland-left {
+    margin-right: 72px;
+  }
+
+  .rsvp-garland-right {
+    margin-left: 72px;
+  }
+
+  .btn-submit {
+    min-width: 160px;
+    padding: 0.8rem 2.2rem;
+    font-size: 0.98rem;
   }
 
   .rsvp-hanging-chandelier {
