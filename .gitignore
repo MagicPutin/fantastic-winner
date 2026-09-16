@@ -1,0 +1,8 @@
+src/
+build.js
+build.bat
+build.ps1
+README.md
+AGENTS.md
+wedding.code-workspace
+.vscode/
