@@ -1359,24 +1359,25 @@ body {
 
   .rsvp-garland {
     display: block !important;
-    top: 10px;
-    width: calc(50% - 72px);
-    max-width: 120px;
-    opacity: 0.85;
+    visibility: visible !important;
+    top: 13px;
+    width: 36%;
+    max-width: 130px;
+    opacity: 0.95;
   }
 
   .rsvp-garland-left {
-    margin-right: 72px;
+    margin-right: 68px;
   }
 
   .rsvp-garland-right {
-    margin-left: 72px;
+    margin-left: 68px;
   }
 
   .btn-submit {
-    min-width: 160px;
-    padding: 0.8rem 2.2rem;
-    font-size: 0.98rem;
+    min-width: 150px;
+    padding: 0.8rem 1.8rem;
+    font-size: 0.95rem;
   }
 
   .rsvp-hanging-chandelier {
