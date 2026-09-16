@@ -183,7 +183,7 @@
       if (coupleFlow) coupleFlow.style.display = 'flex';
 
       if (attendanceSingleOptions) attendanceSingleOptions.style.display = 'none';
-      if (attendanceCoupleOptions) attendanceCoupleOptions.style.display = 'flex';
+      if (attendanceCoupleOptions) attendanceCoupleOptions.style.display = 'grid';
 
       const g1Label = guest1 || 'Гость 1';
       const g2Label = guest2 || 'Гость 2';
@@ -200,8 +200,8 @@
         const soloWhoEl = document.querySelector('input[name="couple_solo_guest"]:checked');
         const soloWho = soloWhoEl ? soloWhoEl.value : 'guest1';
 
-        const isOnlyZags = selectedAttendance === 'сможем быть только в ЗАГСе' || selectedAttendance === 'смогу быть только в ЗАГСе';
-        const isDeclined = selectedAttendance === 'к сожалению, не сможем';
+        const isOnlyZags = selectedAttendance.includes('только в ЗАГСе');
+        const isDeclined = selectedAttendance.includes('не сможем');
 
         if (isDeclined) {
           if (extendedDetails) extendedDetails.style.display = 'none';
@@ -247,6 +247,7 @@
         r.addEventListener('change', updateCoupleAttendanceUI);
       });
 
+      window.__refreshAttendanceUI = updateCoupleAttendanceUI;
       updateCoupleAttendanceUI();
     } else {
       // Single Flow
@@ -261,25 +262,36 @@
         singleHotDishTitle.innerHTML = 'Что предпочитаете из горячего? <span class="req-star">*</span>';
       }
 
+      function updateSingleAttendanceUI() {
+        const attRadio = document.querySelector('input[name="attendance"]:checked');
+        const val = attRadio ? attRadio.value : 'обязательно буду!';
+        const isDeclined = val.includes('не получится');
+        const isOnlyZags = val.includes('только в ЗАГСе');
+
+        if (isDeclined) {
+          if (extendedDetails) extendedDetails.style.display = 'none';
+        } else if (isOnlyZags) {
+          if (extendedDetails) extendedDetails.style.display = 'flex';
+          if (foodDrinksBlock) foodDrinksBlock.style.display = 'none';
+          if (wishesGroup) wishesGroup.style.display = 'block';
+          if (wishesLabel) wishesLabel.innerText = 'Пожелания или комментарии:';
+        } else {
+          if (extendedDetails) extendedDetails.style.display = 'flex';
+          if (foodDrinksBlock) foodDrinksBlock.style.display = 'flex';
+          if (wishesGroup) wishesGroup.style.display = 'block';
+          if (wishesLabel) wishesLabel.innerText = 'Пожелания или комментарии (аллергии, любимая песня):';
+        }
+
+        syncAllOptionCards();
+      }
+
       // Single attendance change handler
       document.querySelectorAll('input[name="attendance"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-          const val = e.target.value;
-          if (val === 'к сожалению, не получится') {
-            if (extendedDetails) extendedDetails.style.display = 'none';
-          } else if (val === 'смогу быть только в ЗАГСе' || val === 'смогу быть только на регистрации в ЗАГСе') {
-            if (extendedDetails) extendedDetails.style.display = 'flex';
-            if (foodDrinksBlock) foodDrinksBlock.style.display = 'none';
-            if (wishesGroup) wishesGroup.style.display = 'block';
-            if (wishesLabel) wishesLabel.innerText = 'Пожелания или комментарии:';
-          } else {
-            if (extendedDetails) extendedDetails.style.display = 'flex';
-            if (foodDrinksBlock) foodDrinksBlock.style.display = 'flex';
-            if (wishesGroup) wishesGroup.style.display = 'block';
-            if (wishesLabel) wishesLabel.innerText = 'Пожелания или комментарии (аллергии, любимая песня):';
-          }
-        });
+        radio.addEventListener('change', updateSingleAttendanceUI);
       });
+
+      window.__refreshAttendanceUI = updateSingleAttendanceUI;
+      updateSingleAttendanceUI();
     }
   }
 
@@ -400,7 +412,13 @@
         formData.set('Invitation_Type', currentType === 'couple' ? 'На пару' : 'На 1 человека');
         formData.set('Attendance_Status', attendanceVal);
 
-        if (!isDeclined) {
+        const isOnlyZags = attendanceVal.includes('только в ЗАГСе') || attendanceVal.includes('только на регистрации');
+
+        if (isOnlyZags) {
+          formData.set('Presence_Format', 'Только торжественная регистрация в ЗАГСе (без банкета)');
+          const wishesVal = form.querySelector('textarea[name="wishes"]')?.value.trim();
+          formData.set('Wishes_and_Comments', wishesVal || '—');
+        } else if (!isDeclined) {
           if (currentType === 'couple') {
             const g1Name = guest1 || 'Гость 1';
             const g2Name = guest2 || 'Гость 2';
@@ -470,11 +488,18 @@
             triggerConfetti();
             form.reset();
 
-            // Reset option cards active styling
-            syncAllOptionCards();
-
+            // Explicitly restore food & drinks visibility and refresh UI
             const extendedDetails = document.getElementById('rsvp-extended-details');
             if (extendedDetails) extendedDetails.style.display = 'flex';
+            const foodDrinksBlock = document.getElementById('rsvp-food-drinks');
+            if (foodDrinksBlock) foodDrinksBlock.style.display = 'flex';
+
+            if (window.__refreshAttendanceUI) {
+              window.__refreshAttendanceUI();
+            }
+
+            // Reset option cards active styling
+            syncAllOptionCards();
 
             if (hiddenNameInput) hiddenNameInput.value = guestNameVal;
             if (manualNameInput && guestNameVal) manualNameInput.value = guestNameVal;
