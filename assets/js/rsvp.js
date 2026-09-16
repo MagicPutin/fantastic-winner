@@ -183,7 +183,7 @@
       if (coupleFlow) coupleFlow.style.display = 'flex';
 
       if (attendanceSingleOptions) attendanceSingleOptions.style.display = 'none';
-      if (attendanceCoupleOptions) attendanceCoupleOptions.style.display = 'grid';
+      if (attendanceCoupleOptions) attendanceCoupleOptions.style.display = 'flex';
 
       const g1Label = guest1 || 'Гость 1';
       const g2Label = guest2 || 'Гость 2';
@@ -254,7 +254,7 @@
       if (singleFlow) singleFlow.style.display = 'flex';
       if (coupleFlow) coupleFlow.style.display = 'none';
 
-      if (attendanceSingleOptions) attendanceSingleOptions.style.display = 'grid';
+      if (attendanceSingleOptions) attendanceSingleOptions.style.display = 'flex';
       if (attendanceCoupleOptions) attendanceCoupleOptions.style.display = 'none';
       if (coupleSoloAttendeeSelect) coupleSoloAttendeeSelect.classList.remove('visible');
 
