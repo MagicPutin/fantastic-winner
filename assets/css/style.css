@@ -1273,28 +1273,27 @@ body {
 
 .rsvp-garland {
   position: absolute;
-  top: 14px;
+  top: 2px;
   pointer-events: none;
   z-index: 1;
   opacity: 0.9;
 }
 
 .rsvp-garland-left {
-  left: calc(50% - 50vw);
-  right: calc(50% + 85px);
+  left: -2.5rem;
+  right: calc(50% + 88px);
   width: auto;
 }
 
 .rsvp-garland-right {
-  left: calc(50% + 85px);
-  right: calc(50% - 50vw);
+  left: calc(50% + 88px);
+  right: -2.5rem;
   width: auto;
 }
 
 .rsvp-garland img {
   width: 100%;
-  height: clamp(26px, 4.5vw, 55px);
-  object-fit: fill;
+  height: auto;
   display: block;
 }
 
@@ -1362,22 +1361,22 @@ body {
   .rsvp-garland {
     display: block !important;
     visibility: visible !important;
-    top: 12px;
+    top: 6px;
     opacity: 0.95;
   }
 
   .rsvp-garland-left {
-    left: calc(50% - 50vw);
+    left: -1.25rem;
     right: calc(50% + 68px);
   }
 
   .rsvp-garland-right {
     left: calc(50% + 68px);
-    right: calc(50% - 50vw);
+    right: -1.25rem;
   }
 
   .rsvp-garland img {
-    height: clamp(24px, 5.5vw, 36px);
+    height: auto;
   }
 
   .btn-submit {
