@@ -38,7 +38,108 @@
     });
   }
 
-  // 2. HELPER: Parse URL Search Parameters for Personalized Invitations
+  // 2. HELPER: Russian Declension for Genitive Case (Родительный падеж — «для кого?»)
+  function declineWord(word) {
+    if (!word || word.length < 2) return word;
+    const lower = word.toLowerCase();
+
+    // Irregular and fleeting vowel names
+    const irregulars = {
+      'павел': 'Павла',
+      'петр': 'Петра',
+      'пётр': 'Петра',
+      'лев': 'Льва',
+      'любовь': 'Любови',
+      'илья': 'Ильи'
+    };
+    if (irregulars[lower]) {
+      const res = irregulars[lower];
+      return word[0] === word[0].toUpperCase() ? res : res.toLowerCase();
+    }
+
+    // Adjective-like surnames and titles (Крестный -> Крестного, Крестная -> Крестной)
+    if (lower.endsWith('ый') || lower.endsWith('ой')) {
+      return word.slice(0, -2) + (word.slice(-2) === 'ОЙ' || word.slice(-2) === 'ЫЙ' ? 'ОГО' : 'ого');
+    }
+    if (lower.endsWith('ая')) {
+      return word.slice(0, -2) + (word.slice(-2) === 'АЯ' ? 'ОЙ' : 'ой');
+    }
+    if (lower.endsWith('яя')) {
+      return word.slice(0, -2) + (word.slice(-2) === 'ЯЯ' ? 'ЕЙ' : 'ей');
+    }
+
+    // -ия -> -ии (Анастасия -> Анастасии, Мария -> Марии, Юлия -> Юлии)
+    if (lower.endsWith('ия')) {
+      return word.slice(0, -2) + (word.slice(-2) === 'ИЯ' ? 'ИИ' : 'ии');
+    }
+
+    // -ья -> -ьи (Дарья -> Дарьи, Софья -> Софьи, Наталья -> Натальи)
+    if (lower.endsWith('ья')) {
+      return word.slice(0, -2) + (word.slice(-2) === 'ЬЯ' ? 'ЬИ' : 'ьи');
+    }
+
+    // -а -> -и or -ы
+    if (lower.endsWith('а')) {
+      const prevChar = lower[lower.length - 2];
+      // If preceded by vowel (e.g. Франсуа) -> indeclinable
+      if ('аеёиоуыэюя'.includes(prevChar)) {
+        return word;
+      }
+      const sibilantOrVelar = 'гкхжчшщ';
+      const isUpper = word.endsWith('А');
+      if (sibilantOrVelar.includes(prevChar)) {
+        return word.slice(0, -1) + (isUpper ? 'И' : 'и');
+      } else {
+        return word.slice(0, -1) + (isUpper ? 'Ы' : 'ы');
+      }
+    }
+
+    // -я -> -и (Настя -> Насти, Катя -> Кати, Ваня -> Вани, Дядя -> Дяди, Тетя -> Тети)
+    if (lower.endsWith('я')) {
+      const isUpper = word.endsWith('Я');
+      return word.slice(0, -1) + (isUpper ? 'И' : 'и');
+    }
+
+    // -й -> -я (Алексей -> Алексея, Дмитрий -> Дмитрия, Сергей -> Сергея)
+    if (lower.endsWith('й')) {
+      const isUpper = word.endsWith('Й');
+      return word.slice(0, -1) + (isUpper ? 'Я' : 'я');
+    }
+
+    // -ь -> -я (Игорь -> Игоря)
+    if (lower.endsWith('ь')) {
+      const isUpper = word.endsWith('Ь');
+      return word.slice(0, -1) + (isUpper ? 'Я' : 'я');
+    }
+
+    // Hard consonants -> +а (Александр -> Александра, Иван -> Ивана, Михаил -> Михаила)
+    const consonants = 'бвгджзклмнпрстфхцчшщ';
+    const lastChar = lower[lower.length - 1];
+    if (consonants.includes(lastChar)) {
+      const isUpper = word[word.length - 1] === word[word.length - 1].toUpperCase();
+      return word + (isUpper ? 'А' : 'а');
+    }
+
+    return word;
+  }
+
+  function toGenitive(str) {
+    if (!str || typeof str !== 'string') return '';
+    const trimmed = str.trim();
+    if (!trimmed) return '';
+    const clean = trimmed.replace(/^для\s+/i, '');
+
+    // Split compound names with conjunctions: 'и', '&', '+'
+    const parts = clean.split(/(\s+(?:и|&|\+)\s+)/i);
+    if (parts.length > 1) {
+      return parts.map((p, idx) => idx % 2 === 0 ? toGenitive(p) : p).join('');
+    }
+
+    // Multi-word names: "Дядя Сережа" -> "Дяди Сережи", "Тетя Лена" -> "Тети Лены"
+    return clean.split(/\s+/).map(declineWord).join(' ');
+  }
+
+  // 3. HELPER: Parse URL Search Parameters for Personalized Invitations
   function parsePersonalizedParams() {
     const urlParams = new URLSearchParams(window.location.search);
 
@@ -52,6 +153,13 @@
     let guest2 = urlParams.get('g2') || urlParams.get('guest2') || '';
     guest1 = guest1.trim();
     guest2 = guest2.trim();
+
+    let toGen = urlParams.get('to_gen') || '';
+    let g1Gen = urlParams.get('g1_gen') || '';
+    let g2Gen = urlParams.get('g2_gen') || '';
+    toGen = toGen.trim();
+    g1Gen = g1Gen.trim();
+    g2Gen = g2Gen.trim();
 
     let type = 'single';
     if (typeParam === 'couple' || typeParam === 'pair' || typeParam === '2') {
@@ -91,20 +199,34 @@
       }
     }
 
+    // Calculate genitive forms if not explicitly provided in URL
+    if (!toGen && guestName) {
+      toGen = toGenitive(guestName);
+    }
+    if (!g1Gen && guest1) {
+      g1Gen = toGenitive(guest1);
+    }
+    if (!g2Gen && guest2) {
+      g2Gen = toGenitive(guest2);
+    }
+
     return {
       isPersonalized: Boolean(guestName),
       guestName: guestName,
+      toGen: toGen,
       type: type,
       guest1: guest1,
       guest2: guest2,
+      g1Gen: g1Gen,
+      g2Gen: g2Gen,
       appeal: appeal || (type === 'couple' ? 'Дорогие' : 'Дорогие'),
       customMsg: customMsg
     };
   }
 
-  // 3. APPLY PERSONALIZED GREETING & FORM FLOW TO DOM
+  // 4. APPLY PERSONALIZED GREETING & FORM FLOW TO DOM
   function applyPersonalization() {
-    const { isPersonalized, guestName, type, guest1, guest2, appeal, customMsg } = parsePersonalizedParams();
+    const { isPersonalized, guestName, toGen, type, guest1, guest2, g1Gen, g2Gen, appeal, customMsg } = parsePersonalizedParams();
 
     const heroAppeal = document.getElementById('hero-greeting-appeal');
     const heroGuest = document.getElementById('hero-guest-name');
@@ -153,11 +275,13 @@
 
       if (badge && badgeName && hiddenNameInput) {
         badge.style.display = 'flex';
-        badgeName.innerText = guestName;
+        // Display polite genitive in badge after "Приглашение для:"
+        const displayBadgeName = toGen || guestName;
+        badgeName.innerText = displayBadgeName;
         hiddenNameInput.value = guestName;
 
         if (badgeSubtitle) {
-          badgeSubtitle.innerText = (type === 'couple') ? 'Приглашение для гостей:' : 'Приглашение для гостя:';
+          badgeSubtitle.innerText = 'Приглашение для:';
         }
 
         if (guestNameGroup) guestNameGroup.style.display = 'none';
@@ -187,12 +311,14 @@
 
       const g1Label = guest1 || 'Гость 1';
       const g2Label = guest2 || 'Гость 2';
+      const g1GenTitle = g1Gen || toGenitive(g1Label) || 'Гостя 1';
+      const g2GenTitle = g2Gen || toGenitive(g2Label) || 'Гостя 2';
 
       if (soloGuest1Name) soloGuest1Name.innerText = g1Label;
       if (soloGuest2Name) soloGuest2Name.innerText = g2Label;
 
-      if (coupleDishTitle1) coupleDishTitle1.innerText = `Горячее блюдо для ${g1Label}:`;
-      if (coupleDishTitle2) coupleDishTitle2.innerText = `Горячее блюдо для ${g2Label}:`;
+      if (coupleDishTitle1) coupleDishTitle1.innerText = `Горячее блюдо для ${g1GenTitle}:`;
+      if (coupleDishTitle2) coupleDishTitle2.innerText = `Горячее блюдо для ${g2GenTitle}:`;
 
       function updateCoupleAttendanceUI() {
         const attEl = document.querySelector('input[name="attendance_couple"]:checked');
@@ -259,7 +385,12 @@
       if (coupleSoloAttendeeSelect) coupleSoloAttendeeSelect.classList.remove('visible');
 
       if (singleHotDishTitle) {
-        singleHotDishTitle.innerHTML = 'Что предпочитаете из горячего? <span class="req-star">*</span>';
+        if (guestName) {
+          const singleGen = toGen || toGenitive(guestName);
+          singleHotDishTitle.innerHTML = `Горячее блюдо для ${singleGen}: <span class="req-star">*</span>`;
+        } else {
+          singleHotDishTitle.innerHTML = 'Что предпочитаете из горячего? <span class="req-star">*</span>';
+        }
       }
 
       function updateSingleAttendanceUI() {
